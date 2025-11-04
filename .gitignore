@@ -1,0 +1,62 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual Environment
+venv/
+venv_wsl/
+env/
+ENV/
+.venv
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb
+
+# Dataset
+IoT_Dataset_2023/
+*.csv
+
+# Model files (dung lượng lớn)
+*.h5
+*.hdf5
+*.pkl
+*.joblib
+
+# Backup folders
+backup_*/
+
+# Training outputs
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
+# Results
+results_summary.txt
+training_config.txt
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
