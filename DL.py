@@ -458,29 +458,30 @@ callbacks = [
 ]
 
 # ================================================================================
-# CALCULATE CLASS WEIGHTS (để xử lý imbalanced data)
+# CLASS WEIGHTS - KHÔNG SỬ DỤNG (theo paper DeepFed gốc)
 # ================================================================================
 
-from sklearn.utils.class_weight import compute_class_weight
+# ⚠️ NOTE: Paper DeepFed KHÔNG sử dụng class weights
+# Lý do: Với dataset cực kỳ imbalanced (42:1), class weights quá mạnh
+# gây ra False Positives cao (46,433 attacks bị miss khi dùng balanced weights)
+#
+# Kết quả khi DÙNG class weights (balanced):
+#   - Benign Precision: 60.17% (quá thấp!)
+#   - 46,433 ATTACKS bị phân loại nhầm là Benign (CỰC KỲ NGUY HIỂM!)
+#
+# → BỎ CLASS WEIGHTS để model tự học từ data imbalanced tự nhiên
 
 print("\n" + "-" * 100)
-print("TÍNH TOÁN CLASS WEIGHTS")
+print("CLASS WEIGHTS CONFIGURATION")
 print("-" * 100)
-
-# Tính class weights tự động
-class_weights_array = compute_class_weight(
-    class_weight='balanced',
-    classes=np.unique(y_train),
-    y=y_train
-)
-class_weights = dict(enumerate(class_weights_array))
-
-print(f"\n→ Class Weights (để xử lý imbalanced data - ratio {imbalance_ratio:.2f}:1):")
-print(f"   Class 0 ({le.classes_[0]}): {class_weights[0]:.6f}")
-print(f"   Class 1 ({le.classes_[1]}): {class_weights[1]:.6f}")
-print(f"\n→ Benign class được tăng trọng số {class_weights[1]/class_weights[0]:.2f}x so với Attack")
-print(f"   → Model sẽ chú ý nhiều hơn vào minority class (Benign)")
-print(f"   → Cải thiện Recall và F1-score cho class Benign")
+print("\n⚠️  KHÔNG SỬ DỤNG CLASS WEIGHTS (theo paper DeepFed)")
+print("   → Model sẽ train trên imbalanced data tự nhiên")
+print("   → Imbalance ratio: {:.2f}:1 (Attack {}% vs Benign {}%)".format(
+    imbalance_ratio,
+    binary_counts['Attack']/len(df)*100,
+    binary_counts['Benign']/len(df)*100
+))
+print("   → Mục tiêu: Tối ưu Attack Recall (giảm thiểu attacks bị bỏ sót)")
 
 print("\nBắt đầu training...\n")
 print("⏰ Thời gian dự kiến: ~2-3 giờ cho 20 epochs với 20 files")
@@ -496,7 +497,7 @@ try:
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         callbacks=callbacks,
-        class_weight=class_weights,  # ← THÊM CLASS WEIGHTS để xử lý imbalanced data
+        # class_weight: KHÔNG SỬ DỤNG (theo paper DeepFed)
         verbose=1
     )
     print("\n✓ Hoàn thành training!")
@@ -713,10 +714,9 @@ with open(os.path.join(BACKUP_FOLDER, 'training_config.txt'), 'w', encoding='utf
     f.write(f"Batch Size: {BATCH_SIZE}\n")
     f.write(f"Learning Rate: 0.001\n")
     f.write(f"Optimizer: Adam\n")
-    f.write(f"Class Weights: Yes (balanced)\n")
-    f.write(f"  - Class 0 ({le.classes_[0]}): {class_weights[0]:.6f}\n")
-    f.write(f"  - Class 1 ({le.classes_[1]}): {class_weights[1]:.6f}\n")
-    f.write(f"  - Weight ratio: {class_weights[1]/class_weights[0]:.2f}x\n")
+    f.write(f"Class Weights: No (theo paper DeepFed)\n")
+    f.write(f"  - Model train trên imbalanced data tự nhiên\n")
+    f.write(f"  - Imbalance ratio: {imbalance_ratio:.2f}:1\n")
 
 print(f"✓ Đã lưu cấu hình training: {BACKUP_FOLDER}/training_config.txt")
 

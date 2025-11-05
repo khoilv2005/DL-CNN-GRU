@@ -37,7 +37,7 @@ backup_*/
 *.png
 *.jpg
 *.jpeg
-*.pdf
+
 
 # Results
 results_summary.txt
