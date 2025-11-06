@@ -30,8 +30,7 @@ IoT_Dataset_2023/
 *.pkl
 *.joblib
 
-# Backup folders
-backup_*/
+
 
 # Training outputs
 *.png
