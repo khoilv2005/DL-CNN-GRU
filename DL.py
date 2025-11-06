@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib
-matplotlib.use('Agg')  # ← FIX: Dùng backend không cần GUI (quan trọng cho WSL!)
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.model_selection import train_test_split
@@ -12,7 +12,7 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, models
 from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau, ModelCheckpoint
-import joblib  # ← FIX: Import ở đầu file thay vì giữa code
+import joblib
 import os
 import warnings
 import shutil
@@ -113,7 +113,7 @@ if len(dfs) == 0:
 # Merge tất cả
 print(f"\n→ Đang merge {len(dfs)} files...")
 df = pd.concat(dfs, ignore_index=True)
-del dfs  # ← FIX: Giải phóng RAM ngay sau khi merge
+del dfs
 
 print("\n" + "-" * 100)
 print(f"→ Tổng số mẫu: {len(df):,}")
@@ -203,7 +203,7 @@ for bar, (label, count) in zip(bars, binary_counts.items()):
 plt.tight_layout()
 plt.savefig(os.path.join(BACKUP_FOLDER, 'label_distribution.png'), dpi=300, bbox_inches='tight')
 print(f"✓ Đã lưu biểu đồ: {BACKUP_FOLDER}/label_distribution.png")
-plt.close()  # ← FIX: Đóng figure thay vì show() (tránh crash trên WSL)
+plt.close()
 
 # ================================================================================
 # 3. DATA PREPROCESSING
@@ -323,13 +323,7 @@ print("STEP 6: XÂY DỰNG MÔ HÌNH CNN-GRU")
 print("=" * 100)
 
 def build_cnn_gru_model(input_shape, num_classes=2):
-    """
-    Xây dựng mô hình CNN-GRU theo kiến trúc DeepFed:
-    - CNN Module: 3 Conv blocks
-    - GRU Module: 2 GRU layers  
-    - MLP Module: 2 Dense layers
-    - Softmax output
-    """
+    """Xây dựng mô hình CNN-GRU (CNN + GRU + MLP + Softmax)."""
     
     input_layer = layers.Input(shape=input_shape, name='input')
     
@@ -454,28 +448,11 @@ callbacks = [
         save_best_only=True,
         verbose=1
     )
-    # Note: Checkpoint tự động sẽ lưu best model, không cần lưu mỗi 5 epochs nữa
+    # Lưu best model tự động qua callback
 ]
 
-# ================================================================================
-# CLASS WEIGHTS - KHÔNG SỬ DỤNG (theo paper DeepFed gốc)
-# ================================================================================
-
-# ⚠️ NOTE: Paper DeepFed KHÔNG sử dụng class weights
-# Lý do: Với dataset cực kỳ imbalanced (42:1), class weights quá mạnh
-# gây ra False Positives cao (46,433 attacks bị miss khi dùng balanced weights)
-#
-# Kết quả khi DÙNG class weights (balanced):
-#   - Benign Precision: 60.17% (quá thấp!)
-#   - 46,433 ATTACKS bị phân loại nhầm là Benign (CỰC KỲ NGUY HIỂM!)
-#
-# → BỎ CLASS WEIGHTS để model tự học từ data imbalanced tự nhiên
 
 print("\n" + "-" * 100)
-print("CLASS WEIGHTS CONFIGURATION")
-print("-" * 100)
-print("\n⚠️  KHÔNG SỬ DỤNG CLASS WEIGHTS (theo paper DeepFed)")
-print("   → Model sẽ train trên imbalanced data tự nhiên")
 print("   → Imbalance ratio: {:.2f}:1 (Attack {}% vs Benign {}%)".format(
     imbalance_ratio,
     binary_counts['Attack']/len(df)*100,
@@ -497,7 +474,6 @@ try:
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         callbacks=callbacks,
-        # class_weight: KHÔNG SỬ DỤNG (theo paper DeepFed)
         verbose=1
     )
     print("\n✓ Hoàn thành training!")
@@ -547,7 +523,7 @@ axes[1].grid(True, alpha=0.3)
 plt.tight_layout()
 plt.savefig(os.path.join(BACKUP_FOLDER, 'training_history.png'), dpi=300, bbox_inches='tight')
 print(f"\n✓ Đã lưu biểu đồ training history: {BACKUP_FOLDER}/training_history.png")
-plt.close()  # ← FIX: Đóng figure thay vì show()
+plt.close()
 
 # ================================================================================
 # 9. EVALUATE MODEL
@@ -610,8 +586,8 @@ print(f"\n⚠️  Lưu ý: Label encoding:")
 print(f"   Class 0 = {le.classes_[0]}")
 print(f"   Class 1 = {le.classes_[1]}\n")
 
-report = classification_report(y_test, y_pred, 
-                               target_names=[le.classes_[0], le.classes_[1]],  # ← FIX: Dùng thứ tự đúng
+report = classification_report(y_test, y_pred,
+                               target_names=[le.classes_[0], le.classes_[1]],
                                digits=4)
 print(report)
 
@@ -633,9 +609,9 @@ plt.figure(figsize=(10, 8))
 
 # ⚠️ FIX: Dùng thứ tự label đúng theo LabelEncoder
 # Attack (class 0) trước, Benign (class 1) sau
-sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
-           xticklabels=[le.classes_[0], le.classes_[1]],  # ← FIX: Attack, Benign
-           yticklabels=[le.classes_[0], le.classes_[1]],  # ← FIX: Attack, Benign
+sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+           xticklabels=[le.classes_[0], le.classes_[1]],
+           yticklabels=[le.classes_[0], le.classes_[1]],
            cbar_kws={'label': 'Count'},
            annot_kws={'fontsize': 14, 'fontweight': 'bold'})
 plt.title('Confusion Matrix', fontsize=18, fontweight='bold', pad=20)
@@ -644,7 +620,7 @@ plt.xlabel('Predicted Label', fontsize=14, fontweight='bold')
 plt.tight_layout()
 plt.savefig(os.path.join(BACKUP_FOLDER, 'confusion_matrix.png'), dpi=300, bbox_inches='tight')
 print(f"\n✓ Đã lưu confusion matrix: {BACKUP_FOLDER}/confusion_matrix.png")
-plt.close()  # ← FIX: Đóng figure thay vì show()
+plt.close()
 
 # ================================================================================
 # 10. SAVE RESULTS
@@ -735,7 +711,6 @@ with open(os.path.join(BACKUP_FOLDER, 'training_config.txt'), 'w', encoding='utf
     f.write(f"Batch Size: {BATCH_SIZE}\n")
     f.write(f"Learning Rate: 0.001\n")
     f.write(f"Optimizer: Adam\n")
-    f.write(f"Class Weights: No (theo paper DeepFed)\n")
     f.write(f"  - Model train trên imbalanced data tự nhiên\n")
     f.write(f"  - Imbalance ratio: {imbalance_ratio:.2f}:1\n")
 
